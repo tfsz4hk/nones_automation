@@ -1,0 +1,298 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1220">
+
+    <title>NetPilot | Network Automation</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="app-layout">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-icon">◈</div>
+            <span>Net<span class="brand-highlight">Pilot</span></span>
+        </div>
+
+        <div class="sidebar-label">WORKSPACE</div>
+
+        <nav class="navigation">
+            <a href="/" class="nav-link active">
+                <span>▦</span>
+                Overview
+            </a>
+        </nav>
+
+        <div class="sidebar-info">
+            <div class="connection-indicator"></div>
+            <div>
+                <strong>Local Lab Environment</strong>
+                <small>Flask · Python · VirtualBox</small>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            NETPILOT VERSION 1.0
+        </div>
+
+    </aside>
+
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">NETWORK OPERATIONS / OVERVIEW</p>
+                <h1>Network Dashboard</h1>
+                <p class="subtitle">
+                    Monitor, manage, and inspect your network devices.
+                </p>
+            </div>
+
+            <div class="server-status">
+                <span class="status-dot"></span>
+                <span>LOCAL SERVER ACTIVE</span>
+            </div>
+
+        </header>
+
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="notice {{ category }}" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+
+        <section class="stats-grid">
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">TOTAL DEVICES</span>
+                    <span class="stat-icon blue-icon">▦</span>
+                </div>
+
+                <h2>{{ devices|length }}</h2>
+                <p>Registered in inventory</p>
+            </article>
+
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">ONLINE DEVICES</span>
+                    <span class="stat-icon green-icon">✓</span>
+                </div>
+
+                <h2 class="green">{{ online }}</h2>
+                <p>Responding to ping</p>
+            </article>
+
+
+            <article class="stat-card">
+                <div class="stat-top">
+                    <span class="stat-label">OFFLINE DEVICES</span>
+                    <span class="stat-icon red-icon">!</span>
+                </div>
+
+                <h2 class="red">{{ offline }}</h2>
+                <p>No ping response</p>
+            </article>
+
+        </section>
+
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+                    <h2>Device Inventory</h2>
+                    <p>Monitor the availability of your registered devices.</p>
+                </div>
+
+                <a href="/" class="button secondary">
+                    ↻ Refresh
+                </a>
+
+            </div>
+
+
+            <div class="table-container">
+
+                <table>
+
+                    <thead>
+                        <tr>
+                            <th>DEVICE NAME</th>
+                            <th>IP ADDRESS / HOST</th>
+                            <th>DEVICE TYPE</th>
+                            <th>STATUS</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for d in devices %}
+
+                        <tr>
+
+                            <td>
+                                <div class="device-name">
+                                    <div class="device-avatar">▣</div>
+                                    <strong>{{ d.name }}</strong>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="ip-address">{{ d.host }}</span>
+                            </td>
+
+                            <td>
+                                <span class="device-type">
+                                    {{ d.device_type|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="pill {{ 'up' if d.online else 'down' }}">
+                                    <span class="pill-dot"></span>
+                                    {{ 'ONLINE' if d.online else 'OFFLINE' }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <div class="actions">
+
+                                    <a class="button small inspect-button"
+                                       href="{{ url_for('command', device_id=loop.index0) }}">
+                                        Inspect
+                                    </a>
+
+                                    <form method="post"
+                                          action="{{ url_for('delete_device', device_id=loop.index0) }}"
+                                          onsubmit="return confirm('Are you sure you want to remove this device?');">
+
+                                        <button type="submit"
+                                                class="button danger small">
+                                            Delete
+                                        </button>
+
+                                    </form>
+
+                                </div>
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="5" class="empty">
+                                <div class="empty-icon">▦</div>
+                                <strong>No devices found</strong>
+                                <p>Add your first network device to get started.</p>
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="table-footer">
+                Showing {{ devices|length }} registered device(s)
+            </div>
+
+        </section>
+
+
+        <section class="panel add-device-panel">
+
+            <div class="panel-header">
+                <div>
+                    <h2>Add Network Device</h2>
+                    <p>Register a new virtual machine or network device.</p>
+                </div>
+
+                <div class="add-icon">+</div>
+            </div>
+
+
+            <form class="add-form"
+                  method="post"
+                  action="{{ url_for('add_device') }}">
+
+                <label>
+                    <span>DEVICE NAME</span>
+                    <input
+                        type="text"
+                        name="name"
+                        placeholder="e.g. Ubuntu Server"
+                        maxlength="100"
+                        required>
+                </label>
+
+
+                <label>
+                    <span>IP ADDRESS / HOSTNAME</span>
+                    <input
+                        type="text"
+                        name="host"
+                        placeholder="e.g. 192.168.56.101"
+                        required>
+                </label>
+
+
+                <label>
+                    <span>DEVICE TYPE</span>
+
+                    <select name="device_type" required>
+                        <option value="linux">Linux (SSH)</option>
+                        <option value="cisco_ios">Cisco IOS (SSH)</option>
+                    </select>
+                </label>
+
+
+                <div class="form-action">
+                    <button type="submit" class="button primary">
+                        + Add Device
+                    </button>
+                </div>
+
+            </form>
+
+            <div class="form-hint">
+                <span>ⓘ</span>
+                Only add devices you own or are authorized to manage.
+            </div>
+
+        </section>
+
+
+        <footer class="footer">
+            <span>◈ NetPilot Network Automation</span>
+            <span>Built for a private VirtualBox practice lab</span>
+        </footer>
+
+    </main>
+
+</div>
+
+</body>
+</html>

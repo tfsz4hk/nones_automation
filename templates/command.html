@@ -1,0 +1,13 @@
+
+{% if error %}
+<div class="notice error" role="alert">
+    {{ error }}
+</div>
+{% endif %}
+
+{% if output %}
+<div class="output-panel">
+    <h3>Command Output</h3>
+    <pre>{{ output }}</pre>
+</div>
+{% endif %}
